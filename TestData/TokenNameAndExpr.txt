@@ -1,0 +1,5 @@
+TOKENNAME:Basic EXPRESSION:this is just a test
+TOKENNAME:                 Basic                      EXPRESSION:                this is just a test     
+//this is a comment should be passed
+                                                                    
+this should not be passed                           
