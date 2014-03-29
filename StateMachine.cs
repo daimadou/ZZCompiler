@@ -31,14 +31,14 @@ namespace ZzCompiler
             }
         }
 
-        static Regex TokenPattern = new Regex(@"(^(TOKENNAME:\s*(?<TokenName>\w+)\s+EXPRESSION:\s*(?<Expr>.*)\s*)$)|(^\s*(\/\/.*)?$)", RegexOptions.IgnoreCase);
+        static Regex TokenPattern = new Regex(@"(^(TOKENNAME:\s*(?<TokenName>\w+)\s+EXPRESSION:\s*(?<Expr>.*)\s*)$)|(^\s*(\/\/.*)?$)");
         static Regex CommentPattern = new Regex(@"^\/\/.*$");
         static Regex EmptyLinePattern = new Regex(@"^[ ]*$");
         public static void getExpr(out string TokenName, out string Expr, string inputLine, int LineNum)
         {
             Match mc = TokenPattern.Match(inputLine);
             TokenName = mc.Groups["TokenName"].Value;
-            Expr = mc.Groups["expr"].Value;
+            Expr = mc.Groups["Expr"].Value;
             if(!mc.Success)
             {
                 Console.Error.WriteLine("input formate wrong in Line: " + LineNum);
