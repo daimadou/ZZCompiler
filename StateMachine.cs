@@ -97,14 +97,30 @@ namespace ZzCompiler
             return start;
         }
 
-        private NFAState Expr(ref NFAState start, ref NFAState end, ref int index)
+        private void Expr(ref NFAState start, ref NFAState end, ref int index)
         {
-            return null;
+            NFAState nextStart = null;
+            NFAState nextEnd = null;
+            NFAState cur = null;
+            CatExpr(ref start, ref end, ref index);
+            while(innerExpression[index]=='|')
+            {
+                index++;
+                CatExpr(ref nextStart, ref nextEnd, ref index);
+                cur = new NFAState();
+                cur.next = start;
+                cur.next2 = nextStart;
+                start = cur;
+
+                cur = new NFAState();
+                cur.next = end;
+                cur.next2 = nextEnd;
+                end = cur;
+            }
         }
 
-        private NFAState CatExpr(ref NFAState start, ref NFAState end)
+        private void CatExpr(ref NFAState start, ref NFAState end, ref int index)
         {
-            return null;
         }
     }
     
