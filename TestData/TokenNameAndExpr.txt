@@ -1,5 +1,5 @@
-TokenName:Basic EXPRESSION:this is just a test
-TOKENNAME:                 Basic                      EXPRESSION:                this is just a test     
+TokenName:Basic EXPRESSION:this is just a test \
+TOKENNAME:                 Basic                      EXPRESSION:                this is just a test \n hahah     
 //this is a comment should be passed
                                                                     
 this should not be passed                           
