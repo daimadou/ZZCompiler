@@ -14,7 +14,7 @@ namespace ZzCompiler
         public enum EdgeLabel { EMPTY = -3, CCL = -2, EPSILON = -1 };
         public enum AnchorLabel { NONE = 0, START, END };
         public int edge{set; get;}
-        HashSet<char> characterSet;
+        public HashSet<char> characterSet;
         
         public NFAState next;
         public NFAState next2;
@@ -35,13 +35,29 @@ namespace ZzCompiler
         Boolean isAccpetState;
         public NFAState()
         {
-            edge = (int)EdgeLabel.EMPTY;
-            characterSet = new HashSet<char>();
+            edge = (int)EdgeLabel.EPSILON;
+            characterSet = null;
             next = null;
             next2 = null;
             index = -1;
             isAccpetState = false;
             anchor = (int)AnchorLabel.NONE;
+        }
+
+        public bool copy(NFAState nfastate)
+        {
+            if (nfastate == null)
+            {
+                return false;
+            }
+
+            this.edge = nfastate.edge;
+            this.characterSet = nfastate.characterSet;
+            this.next = nfastate.next;
+            this.next2 = nfastate.next2;
+            this.isAccpetState = nfastate.isAccpetState;
+            this.anchor = nfastate.anchor;
+            return true;
         }
     }
     
@@ -54,7 +70,6 @@ namespace ZzCompiler
             innerExpression = input;
             NFAState start = new NFAState();
             NFAState current = start;
-            current.edge = (int)NFAState.EdgeLabel.EPSILON;
             int index = 0;
             current.next = Rule(ref index);
             while (index < input.Length)
@@ -121,6 +136,152 @@ namespace ZzCompiler
 
         private void CatExpr(ref NFAState start, ref NFAState end, ref int index)
         {
+            if(CheckFirstInCatExpr(index))
+            {
+                factor(ref start, ref end, ref index);    
+            }
+
+            NFAState nextStart = null;
+            NFAState nextEnd = null;
+            while (CheckFirstInCatExpr(index))
+            {
+                factor(ref nextStart, ref nextEnd, ref index);
+                end.copy(nextStart);
+                end = nextEnd;
+
+                nextStart = null;
+                nextEnd = null;
+                
+            }
+        }
+
+        private bool CheckFirstInCatExpr(int index)
+        {
+            if (index < innerExpression.Length)
+            {
+                char c = innerExpression[index];
+                switch (c)
+                {
+                    case ')':
+                    case '$':
+                    case '|': 
+                        return false;
+                    case '*':
+                    case '+':
+                    case '?':
+                    case ']':
+                    case '^':
+                        Console.Error.WriteLine("{0} should not appear here.", c);
+                        return false;
+                    default:
+                        return true;
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+
+        private void factor(ref NFAState start, ref NFAState end, ref int index)
+        {
+            NFAState newStart = null;
+            NFAState newEnd = null;
+
+            term(ref start, ref end, ref index);
+            char c = innerExpression[index++];
+
+            if (c == '*' || c == '+' || c == '?')
+            {
+                newStart = new NFAState();
+                newEnd = new NFAState();
+
+                newStart.next = start;
+                end.next = newEnd;
+
+                if (c == '*' || c == '?')
+                {
+                    newStart.next2 = newEnd;
+                }
+
+                if (c == '*' || c == '+')
+                {
+                    end.next2 = start;
+                }
+
+                start = newStart;
+                end = newEnd;
+            }
+        }
+
+        private void term(ref NFAState start, ref NFAState end, ref int index)
+        {
+            char c = innerExpression[index++];
+
+            if (c == '(')
+            {
+                Expr(ref start, ref end, ref index);
+                char curChar = innerExpression[index++];
+                if (innerExpression[index] == ')')
+                {
+                    return;
+                }
+                else
+                {
+                    Console.Error.WriteLine("{0} is invlaid ", curChar);
+                    throw new InvalidCharaterException(curChar + " is invlaid");
+                }
+            }
+            else
+            {
+                start = new NFAState();
+                end = new NFAState();
+                start.next = end;
+
+                if (!(c == '.' || c == '['))
+                {
+                    start.edge = c;
+                }
+                else 
+                {
+                    start.edge = (int)NFAState.EdgeLabel.CCL;
+                    if (c == '.')
+                    {
+                        start.characterSet = new HashSet<char>();
+                        for (int i = 0; i < ' '; i++)
+                        {
+                            start.characterSet.Add((char)i);
+                        }
+                    }
+                    else
+                    {
+                        if(c == '[')
+                        {
+                            if (index < innerExpression.Length)
+                            {
+                                char curCharater = innerExpression[index++];
+                                while (curCharater != ']' || index < innerExpression.Length)
+                                {
+                                    curCharater = innerExpression[index++]; 
+                                }
+
+                                if (curCharater != ']')
+                                {
+                                    Console.Error.WriteLine("can't find ]");
+                                    throw new InvalidCharaterException();
+                                }
+                            }
+                            else 
+                            {
+                                Console.Error.WriteLine("can't find ]");
+                                throw new InvalidCharaterException();
+                            }
+
+                        }
+                    }
+                }
+            }
         }
     }
     
