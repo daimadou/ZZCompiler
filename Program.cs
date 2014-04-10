@@ -19,6 +19,7 @@ namespace ZzCompiler
 
         void TestGetTokenNameAndExpr()
         {
+            /*
             string[] lines = System.IO.File.ReadAllLines(@".\TestData\TokenNameAndExpr.txt");
             for(int i = 0; i < lines.Length; i++)
             {
@@ -27,6 +28,10 @@ namespace ZzCompiler
                 StateMachine.getExpr(out tokenName, out expr, lines[i], i + 1);
                 Console.WriteLine("TokenName:{0} Expr:{1}", tokenName, expr);
             }
+             */
+            NFAStateMachine machine = new NFAStateMachine();
+            machine.Machine("d*.d|d.d*");
+            machine.DumpAllStates();
         }
     }
 }

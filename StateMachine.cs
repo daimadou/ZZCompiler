@@ -15,7 +15,9 @@ namespace ZzCompiler
         public enum AnchorLabel { NONE = 0, START, END };
         public int edge{set; get;}
         public HashSet<char> characterSet;
-        
+        public static int ID = 0;
+        public int id;
+
         public NFAState next;
         public NFAState next2;
         int anchor;
@@ -31,7 +33,6 @@ namespace ZzCompiler
             }
         }
         
-        int index;
         Boolean isAccpetState;
         public NFAState()
         {
@@ -39,9 +40,9 @@ namespace ZzCompiler
             characterSet = null;
             next = null;
             next2 = null;
-            index = -1;
             isAccpetState = false;
             anchor = (int)AnchorLabel.NONE;
+            id = ID++;
         }
 
         public bool copy(NFAState nfastate)
@@ -65,10 +66,18 @@ namespace ZzCompiler
     class NFAStateMachine 
     {
         string innerExpression;
-        private NFAState Machine(string input)
+        List<NFAState> StateList;
+
+        public NFAStateMachine()
+        {
+            StateList = new List<NFAState>();
+        }
+
+        public NFAState Machine(string input)
         {
             innerExpression = input;
             NFAState start = new NFAState();
+            StateList.Add(start);
             NFAState current = start;
             int index = 0;
             current.next = Rule(ref index);
@@ -88,6 +97,7 @@ namespace ZzCompiler
             if (innerExpression[index] == '^')
             {
                 start = new NFAState();
+                StateList.Add(start);
                 start.edge = '\n';
                 index++;
                 Expr(ref start.next, ref end, ref index);
@@ -100,6 +110,7 @@ namespace ZzCompiler
             if (index < innerExpression.Length && innerExpression[index] == '$')
             {
                 end.next = new NFAState();
+                StateList.Add(end);
                 end.edge = '\n';
                 end = end.next;
                 index++;
@@ -118,16 +129,18 @@ namespace ZzCompiler
             NFAState nextEnd = null;
             NFAState cur = null;
             CatExpr(ref start, ref end, ref index);
-            while(innerExpression[index]=='|')
+            while(index<innerExpression.Length && innerExpression[index]=='|')
             {
                 index++;
                 CatExpr(ref nextStart, ref nextEnd, ref index);
                 cur = new NFAState();
+                StateList.Add(cur);
                 cur.next = start;
                 cur.next2 = nextStart;
                 start = cur;
 
                 cur = new NFAState();
+                StateList.Add(cur);
                 cur.next = end;
                 cur.next2 = nextEnd;
                 end = cur;
@@ -147,6 +160,7 @@ namespace ZzCompiler
             {
                 factor(ref nextStart, ref nextEnd, ref index);
                 end.copy(nextStart);
+                StateList.Remove(nextStart);
                 end = nextEnd;
 
                 nextStart = null;
@@ -196,6 +210,8 @@ namespace ZzCompiler
             {
                 newStart = new NFAState();
                 newEnd = new NFAState();
+                StateList.Add(newStart);
+                StateList.Add(newEnd);
 
                 newStart.next = start;
                 end.next = newEnd;
@@ -212,6 +228,10 @@ namespace ZzCompiler
 
                 start = newStart;
                 end = newEnd;
+            }
+            else
+            {
+                index--;
             }
         }
 
@@ -237,6 +257,8 @@ namespace ZzCompiler
             {
                 start = new NFAState();
                 end = new NFAState();
+                StateList.Add(start);
+                StateList.Add(end);
                 start.next = end;
 
                 if (!(c == '.' || c == '['))
@@ -249,7 +271,7 @@ namespace ZzCompiler
                     if (c == '.')
                     {
                         start.characterSet = new HashSet<char>();
-                        for (int i = 0; i < ' '; i++)
+                        for (int i = 0; i < 255; i++)
                         {
                             start.characterSet.Add((char)i);
                         }
@@ -283,13 +305,31 @@ namespace ZzCompiler
                 }
             }
         }
+
+        public void DumpAllStates()
+        {
+            foreach (NFAState state in StateList)
+            {
+
+                string type = state.edge < 0 ? ((NFAState.EdgeLabel)state.edge).ToString() : ((char)state.edge).ToString(); ;
+                Console.WriteLine("State ID:{0} Type:{1}", state.id, type);
+                if(state.next!=null)
+                {
+                    type = state.next.edge < 0 ? ((NFAState.EdgeLabel)state.next.edge).ToString() : ((char)state.next.edge).ToString();
+                    Console.WriteLine("---->next ID:{0} Type:{1}", state.next.id, type);
+                }
+                if(state.next2!=null)
+                {
+                    type = state.next2.edge < 0 ? ((NFAState.EdgeLabel)state.next2.edge).ToString() : ((char)state.next2.edge).ToString();
+                    Console.WriteLine("---->next ID:{0} Type:{1}", state.next2.id, type);
+                }
+        
+            }
+        }
     }
     
     class StateMachine
     {
-
-
-
         static Regex TokenPattern = new Regex(@"(^(TOKENNAME:\s*(?<TokenName>\w+)\s+EXPRESSION:\s*(?<Expr>.*)\s*)$)|(^\s*(\/\/.*)?$)");
         public static void getExpr(out string TokenName, out string Expr, string inputLine, int LineNum)
         {
