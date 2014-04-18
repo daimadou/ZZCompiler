@@ -34,6 +34,7 @@ namespace ZzCompiler
         }
         
         Boolean isAccpetState;
+        public string accept;
         public NFAState()
         {
             edge = (int)EdgeLabel.EPSILON;
@@ -43,6 +44,7 @@ namespace ZzCompiler
             isAccpetState = false;
             anchor = (int)AnchorLabel.NONE;
             id = ID++;
+            accept = null;
         }
 
         public bool copy(NFAState nfastate)
@@ -116,6 +118,7 @@ namespace ZzCompiler
                 index++;
             }
 
+            end.accept = innerExpression;
             while (index < innerExpression.Length && Char.IsWhiteSpace(innerExpression[index]))
             {
                 index++;
@@ -306,6 +309,58 @@ namespace ZzCompiler
             }
         }
 
+        public List<NFAState> getEClousre(List<NFAState> inputStates, ref string acceptStr)
+        {
+          
+            if (inputStates.Count == 0)
+            {
+                return new List<NFAState>();
+            }
+
+            List<NFAState> ret = new List<NFAState>();
+            Stack<NFAState> stateStack = new Stack<NFAState>();
+            foreach (var v in inputStates)
+            {
+                stateStack.Push(v);
+            }
+
+            while (stateStack.Count > 0)
+            {
+                NFAState s = stateStack.Pop();
+                if (s.accept != null)
+                {
+                    acceptStr = s.accept;
+                }
+
+                if (s.edge == (int)NFAState.EdgeLabel.EPSILON)
+                {
+                    if (s.next != null) 
+                    {
+                        stateStack.Push(s.next);
+                    }
+
+                    if (s.next2 != null)
+                    {
+                        stateStack.Push(s.next2);
+                    }
+                }
+            }
+            return ret;
+        }
+
+        public List<NFAState> Move(List<NFAState> states, char inputChar)
+        {
+            List<NFAState> ret = new List<NFAState>();
+            foreach(var s in states)
+            {
+                if (s.edge == inputChar || (s.edge == (int)NFAState.EdgeLabel.CCL &&　s.characterSet.Contains(inputChar)))
+                {
+                    ret.Add(s.next);
+                }
+            }
+            return ret;
+        }
+
         public void DumpAllStates()
         {
             foreach (NFAState state in StateList)
@@ -327,7 +382,19 @@ namespace ZzCompiler
             }
         }
     }
-    
+
+    class DFAState
+    {
+        public int id;
+        public bool mark;
+        List<NFAState> set;
+    }
+
+    class DFAStateMachine
+    {
+         
+    }
+   
     class StateMachine
     {
         static Regex TokenPattern = new Regex(@"(^(TOKENNAME:\s*(?<TokenName>\w+)\s+EXPRESSION:\s*(?<Expr>.*)\s*)$)|(^\s*(\/\/.*)?$)");
@@ -343,8 +410,5 @@ namespace ZzCompiler
         }
 
     }
-    class DFAStateMachine : StateMachine
-    {
  
-    }
 }
