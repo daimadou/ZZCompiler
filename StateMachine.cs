@@ -217,9 +217,9 @@ namespace ZzCompiler
 
         private bool CheckFirstInCatExpr(int index)
         {
-            if (index < innerExpression.Length)
+            if (curIndex < innerExpression.Length)
             {
-                char c = GetCurChar();
+                char c = innerExpression[curIndex];
                 switch (c)
                 {
                     case ')':
@@ -283,7 +283,7 @@ namespace ZzCompiler
 
         private void term(ref NFAState start, ref NFAState end, ref int index)
         {
-            char c = innerExpression[index++];
+            char c = GetCurChar();
 
             if (c == '(')
             {
@@ -309,46 +309,99 @@ namespace ZzCompiler
 
                 if (!(c == '.' || c == '['))
                 {
-                    start.edge = c;
+                    if (moveStep == 2)
+                    {
+                        switch (c)
+                        {
+                            case 'w':
+                                AddLetters(start);
+                                break;
+                            case 'd':
+                                AddDigits(start);
+                                break;
+                            default:
+                                start.edge = c;
+                                break;
+                        }
+                    }
                 }
                 else 
                 {
-                    start.edge = (int)NFAState.EdgeLabel.CCL;
-                    if (c == '.')
+                    AddSymbolsFromTable(start, c);
+                }
+            }
+        }
+
+        private void AddSymbolsFromTable(NFAState start, char c)
+        {
+            start.edge = (int)NFAState.EdgeLabel.CCL;
+            start.characterSet = new HashSet<char>();
+            if (c == '.')
+            {
+
+                for (int i = 0; i < 255; i++)
+                {
+                    start.characterSet.Add((char)i);
+                }
+            }
+            else
+            {
+                if (c == '[')
+                {
+                    if (curIndex < innerExpression.Length)
                     {
-                        start.characterSet = new HashSet<char>();
-                        for (int i = 0; i < 255; i++)
+                        char curCharater = GetCurChar();
+                        do
                         {
-                            start.characterSet.Add((char)i);
+                            if (curCharater != ']')
+                            {
+                                start.characterSet.Add(curCharater);
+                            }
+                            else
+                            {
+                                break;
+                            }
+                            curCharater = GetCurChar();
+                        } while (curIndex < innerExpression.Length + 1);
+
+                        if (curCharater != ']')
+                        {
+                            Console.Error.WriteLine("can't find ]");
+                            throw new InvalidCharaterException();
                         }
                     }
                     else
                     {
-                        if(c == '[')
-                        {
-                            if (index < innerExpression.Length)
-                            {
-                                char curCharater = innerExpression[index++];
-                                while (curCharater != ']' || index < innerExpression.Length)
-                                {
-                                    curCharater = innerExpression[index++]; 
-                                }
-
-                                if (curCharater != ']')
-                                {
-                                    Console.Error.WriteLine("can't find ]");
-                                    throw new InvalidCharaterException();
-                                }
-                            }
-                            else 
-                            {
-                                Console.Error.WriteLine("can't find ]");
-                                throw new InvalidCharaterException();
-                            }
-
-                        }
+                        Console.Error.WriteLine("can't find ]");
+                        throw new InvalidCharaterException();
                     }
+
                 }
+            }
+        }
+
+        private void AddDigits(NFAState state)
+        {
+            state.edge = (int)NFAState.EdgeLabel.CCL;
+            state.characterSet = new HashSet<char>();
+            for (int i = 0; i < 10; i++)
+            {
+                state.characterSet.Add((char)i);
+            }
+        }
+
+        private void AddLetters(NFAState state)
+        {
+            state.edge = (int)NFAState.EdgeLabel.CCL;
+            state.characterSet = new HashSet<char>();
+            for (char i = 'a'; i <= 'z'; i++)
+            {
+                state.characterSet.Add(i);
+            }
+
+            for (char i = 'A'; i <= 'Z'; i++)
+            {
+                state.characterSet.Add(i);
             }
         }
 
