@@ -68,11 +68,53 @@ namespace ZzCompiler
     class NFAStateMachine 
     {
         string innerExpression;
+        int curIndex;
+        int moveStep;
         List<NFAState> StateList;
+        
+        private char GetCurChar()
+        {
+            char curChar = innerExpression[curIndex];
+            if (curChar == '\\')
+            {
+                if (curIndex + 1 < innerExpression.Length)
+                {
+                    char ret = innerExpression[curIndex + 1];
+                    moveStep = 2;
+                    curIndex += moveStep;
+                    if (ret == 'n')
+                        ret = '\n';
+                    return ret;
+                }
+                else
+                {
+                    throw new InvalidCharaterException("after \\ no following character");
+                }
+            }
+            else
+            {
+                moveStep = 1;
+                return innerExpression[curIndex++];
+            }
+            
+        }
+
+        private void RevertIndex()
+        {
+            curIndex -= moveStep;
+        }
+
+        private bool IsEnd()
+        {
+            return curIndex < innerExpression.Length && innerExpression[curIndex] == '$';
+        }
+        
 
         public NFAStateMachine()
         {
             StateList = new List<NFAState>();
+            curIndex = 0;
+            moveStep = 1;
         }
 
         public NFAState Machine(string input)
@@ -95,13 +137,12 @@ namespace ZzCompiler
         {
             NFAState start = null;
             NFAState end = null;
-
-            if (innerExpression[index] == '^')
+         
+            if (GetCurChar() == '^')
             {
                 start = new NFAState();
                 StateList.Add(start);
                 start.edge = '\n';
-                index++;
                 Expr(ref start.next, ref end, ref index);
             }
             else
@@ -109,20 +150,21 @@ namespace ZzCompiler
                 Expr(ref start, ref end, ref index);
             }
 
-            if (index < innerExpression.Length && innerExpression[index] == '$')
+            if (IsEnd())
             {
                 end.next = new NFAState();
                 StateList.Add(end);
-                end.edge = '\n';
+                end.edge = '\n'; //maybe have a bug
                 end = end.next;
-                index++;
             }
 
             end.accept = innerExpression;
+            /*
             while (index < innerExpression.Length && Char.IsWhiteSpace(innerExpression[index]))
             {
                 index++;
             }
+             */
             return start;
         }
 
@@ -132,7 +174,8 @@ namespace ZzCompiler
             NFAState nextEnd = null;
             NFAState cur = null;
             CatExpr(ref start, ref end, ref index);
-            while(index<innerExpression.Length && innerExpression[index]=='|')
+
+            while (index < innerExpression.Length && GetCurChar() == '|')
             {
                 index++;
                 CatExpr(ref nextStart, ref nextEnd, ref index);
@@ -176,7 +219,7 @@ namespace ZzCompiler
         {
             if (index < innerExpression.Length)
             {
-                char c = innerExpression[index];
+                char c = GetCurChar();
                 switch (c)
                 {
                     case ')':
@@ -207,7 +250,7 @@ namespace ZzCompiler
             NFAState newEnd = null;
 
             term(ref start, ref end, ref index);
-            char c = innerExpression[index++];
+            char c = GetCurChar();
 
             if (c == '*' || c == '+' || c == '?')
             {
@@ -234,7 +277,7 @@ namespace ZzCompiler
             }
             else
             {
-                index--;
+                RevertIndex();
             }
         }
 
