@@ -74,6 +74,7 @@ namespace ZzCompiler
         
         private char GetCurChar()
         {
+
             char curChar = innerExpression[curIndex];
             if (curChar == '\\')
             {
@@ -125,11 +126,13 @@ namespace ZzCompiler
             NFAState current = start;
             int index = 0;
             current.next = Rule(ref index);
+
+            /*
             while (index < input.Length)
             {
                    
             }
-            
+            */
             return start;
         }
 
@@ -147,6 +150,7 @@ namespace ZzCompiler
             }
             else
             {
+                RevertIndex();
                 Expr(ref start, ref end, ref index);
             }
 
@@ -175,7 +179,7 @@ namespace ZzCompiler
             NFAState cur = null;
             CatExpr(ref start, ref end, ref index);
 
-            while (index < innerExpression.Length && GetCurChar() == '|')
+            while (curIndex < innerExpression.Length && GetCurChar() == '|')
             {
                 index++;
                 CatExpr(ref nextStart, ref nextEnd, ref index);
@@ -187,8 +191,8 @@ namespace ZzCompiler
 
                 cur = new NFAState();
                 StateList.Add(cur);
-                cur.next = end;
-                cur.next2 = nextEnd;
+                end.next = cur;
+                nextEnd.next = cur;
                 end = cur;
             }
         }
@@ -324,6 +328,10 @@ namespace ZzCompiler
                                 break;
                         }
                     }
+                    else
+                    {
+                        start.edge = c;
+                    }
                 }
                 else 
                 {
@@ -413,16 +421,18 @@ namespace ZzCompiler
                 return new List<NFAState>();
             }
 
-            List<NFAState> ret = new List<NFAState>();
+            HashSet<NFAState> checkSet = new HashSet<NFAState>();
             Stack<NFAState> stateStack = new Stack<NFAState>();
             foreach (var v in inputStates)
             {
                 stateStack.Push(v);
+                checkSet.Add(v);
             }
 
             while (stateStack.Count > 0)
             {
                 NFAState s = stateStack.Pop();
+                checkSet.Add(s);
                 if (s.accept != null)
                 {
                     acceptStr = s.accept;
@@ -441,7 +451,7 @@ namespace ZzCompiler
                     }
                 }
             }
-            return ret;
+            return new List<NFAState>(checkSet);
         }
 
         public List<NFAState> Move(List<NFAState> states, char inputChar)
@@ -459,6 +469,7 @@ namespace ZzCompiler
 
         public void DumpAllStates()
         {
+            Console.WriteLine("Expression:"+innerExpression);
             foreach (NFAState state in StateList)
             {
 
