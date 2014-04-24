@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -63,7 +64,6 @@ namespace ZzCompiler
             return true;
         }
     }
-    
 
     class NFAStateMachine 
     {
@@ -413,12 +413,12 @@ namespace ZzCompiler
             }
         }
 
-        public List<NFAState> getEClousre(List<NFAState> inputStates, ref string acceptStr)
+        public static HashSet<NFAState> GetEClousre(HashSet<NFAState> inputStates, ref string acceptStr)
         {
           
             if (inputStates.Count == 0)
             {
-                return new List<NFAState>();
+                return new HashSet<NFAState>();
             }
 
             HashSet<NFAState> checkSet = new HashSet<NFAState>();
@@ -451,12 +451,12 @@ namespace ZzCompiler
                     }
                 }
             }
-            return new List<NFAState>(checkSet);
+            return checkSet;
         }
 
-        public List<NFAState> Move(List<NFAState> states, char inputChar)
+        public HashSet<NFAState> Move(List<NFAState> states, char inputChar)
         {
-            List<NFAState> ret = new List<NFAState>();
+            HashSet<NFAState> ret = new HashSet<NFAState>();
             foreach(var s in states)
             {
                 if (s.edge == inputChar || (s.edge == (int)NFAState.EdgeLabel.CCL &&　s.characterSet.Contains(inputChar)))
@@ -492,14 +492,51 @@ namespace ZzCompiler
 
     class DFAState
     {
-        public int id;
-        public bool mark;
-        List<NFAState> set;
+        private static int Count = 0;
+        public int ID;
+        public bool Mark;
+        public HashSet<NFAState> NfaStatesSet;
+        Dictionary<char, DFAState> NextStateTable;
+        public DFAState()
+        {
+            ID = Count++;
+            Mark = false;
+            NfaStatesSet = null;
+            NextStateTable = new Dictionary<char,DFAState>();
+        }
+
+        public DFAState this[char c]
+        {
+            get
+            {
+                return NextStateTable[c];
+            }
+            set
+            {
+                if(NextStateTable.ContainsKey(c))
+                {
+                    throw new Exception("DFA state error");
+                }
+                else
+                {
+                    NextStateTable.Add(c, value);
+                }
+            }
+        }
     }
 
     class DFAStateMachine
     {
-         
+        static DFAState GenerateDFAMachine(NFAState state)
+        {
+            DFAState start = new DFAState();
+            DFAState cur = start;
+            Queue<DFAState> UnmarkQueue = new Queue<DFAState>();
+            UnmarkQueue.Enqueue(cur);
+            String acceptStr = null;
+            //cur.NfaStatesSet = NFAStateMachine.GetEClousre(new []{state}.ToList(), ref acceptStr);
+            return start;
+        }
     }
    
     class StateMachine
