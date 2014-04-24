@@ -6,9 +6,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-
 namespace ZzCompiler
 {
+    using Extension;
 
     class NFAState
     {
@@ -454,7 +454,7 @@ namespace ZzCompiler
             return checkSet;
         }
 
-        public HashSet<NFAState> Move(List<NFAState> states, char inputChar)
+        public static HashSet<NFAState> Move(HashSet<NFAState> states, char inputChar)
         {
             HashSet<NFAState> ret = new HashSet<NFAState>();
             foreach(var s in states)
@@ -497,12 +497,14 @@ namespace ZzCompiler
         public bool Mark;
         public HashSet<NFAState> NfaStatesSet;
         Dictionary<char, DFAState> NextStateTable;
+        public string Accpet;
         public DFAState()
         {
             ID = Count++;
             Mark = false;
             NfaStatesSet = null;
             NextStateTable = new Dictionary<char,DFAState>();
+            Accpet = null;
         }
 
         public DFAState this[char c]
@@ -525,20 +527,56 @@ namespace ZzCompiler
         }
     }
 
+  
     class DFAStateMachine
     {
-        static DFAState GenerateDFAMachine(NFAState state)
+        List<DFAState> StatesSet;
+        public DFAStateMachine()
+        {
+            StatesSet = new List<DFAState>();
+        }
+
+        public DFAState GenerateDFAMachine(NFAState s)
         {
             DFAState start = new DFAState();
             DFAState cur = start;
             Queue<DFAState> UnmarkQueue = new Queue<DFAState>();
             UnmarkQueue.Enqueue(cur);
             String acceptStr = null;
-            //cur.NfaStatesSet = NFAStateMachine.GetEClousre(new []{state}.ToList(), ref acceptStr);
+            cur.NfaStatesSet.Add(s);
+            cur.NfaStatesSet = NFAStateMachine.GetEClousre(cur.NfaStatesSet, ref acceptStr);
+            StatesSet.Add(cur);
+
+            while (UnmarkQueue.Count > 0)
+            {
+                cur = UnmarkQueue.Dequeue();
+                for (char c = (char)0; c < 255; c++)
+                {
+                    String AcceptingStr = null;
+                    HashSet<NFAState> set = NFAStateMachine.GetEClousre(NFAStateMachine.Move(cur.NfaStatesSet, c), ref AcceptingStr);
+
+                    DFAState ds = StatesSet.IsNFASetExisted(set);
+                    if (ds == null)
+                    {
+                        ds = new DFAState();
+                        ds.NfaStatesSet = set;
+                        ds.Accpet = AcceptingStr;
+                        StatesSet.Add(ds);
+                        UnmarkQueue.Enqueue(ds);
+                    }
+                    cur[c] = ds;
+                }
+            }
+            
             return start;
         }
+
+        void DumpAllStates()
+        {
+ 
+        }
     }
-   
+
     class StateMachine
     {
         static Regex TokenPattern = new Regex(@"(^(TOKENNAME:\s*(?<TokenName>\w+)\s+EXPRESSION:\s*(?<Expr>.*)\s*)$)|(^\s*(\/\/.*)?$)");
@@ -556,3 +594,4 @@ namespace ZzCompiler
     }
  
 }
+
