@@ -30,8 +30,11 @@ namespace ZzCompiler
             }
              */
             NFAStateMachine machine = new NFAStateMachine();
-            machine.Machine("d*.d|d.d*");
+            NFAState NFAStart = machine.Machine("d*ad|dad*");
             machine.DumpAllStates();
+            DFAStateMachine machine2 = new DFAStateMachine();
+            machine2.GenerateDFAMachine(NFAStart);
+            machine2.DumpAllStates();
         }
     }
 }

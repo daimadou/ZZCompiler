@@ -456,11 +456,15 @@ namespace ZzCompiler
 
         public static HashSet<NFAState> Move(HashSet<NFAState> states, char inputChar)
         {
-            HashSet<NFAState> ret = new HashSet<NFAState>();
+            HashSet<NFAState> ret = null;
             foreach(var s in states)
             {
-                if (s.edge == inputChar || (s.edge == (int)NFAState.EdgeLabel.CCL &&　s.characterSet.Contains(inputChar)))
+                if (s.edge == (int)inputChar || (s.edge == (int)NFAState.EdgeLabel.CCL &&　s.characterSet.Contains(inputChar)))
                 {
+                    if (ret == null)
+                    {
+                        ret = new HashSet<NFAState>();
+                    }
                     ret.Add(s.next);
                 }
             }
@@ -496,7 +500,7 @@ namespace ZzCompiler
         public int ID;
         public bool Mark;
         public HashSet<NFAState> NfaStatesSet;
-        Dictionary<char, DFAState> NextStateTable;
+        public Dictionary<char, DFAState> NextStateTable;
         public string Accpet;
         public DFAState()
         {
@@ -543,6 +547,7 @@ namespace ZzCompiler
             Queue<DFAState> UnmarkQueue = new Queue<DFAState>();
             UnmarkQueue.Enqueue(cur);
             String acceptStr = null;
+            cur.NfaStatesSet = new HashSet<NFAState>();
             cur.NfaStatesSet.Add(s);
             cur.NfaStatesSet = NFAStateMachine.GetEClousre(cur.NfaStatesSet, ref acceptStr);
             StatesSet.Add(cur);
@@ -553,27 +558,37 @@ namespace ZzCompiler
                 for (char c = (char)0; c < 255; c++)
                 {
                     String AcceptingStr = null;
-                    HashSet<NFAState> set = NFAStateMachine.GetEClousre(NFAStateMachine.Move(cur.NfaStatesSet, c), ref AcceptingStr);
-
-                    DFAState ds = StatesSet.IsNFASetExisted(set);
-                    if (ds == null)
+                    HashSet<NFAState> baseSet = NFAStateMachine.Move(cur.NfaStatesSet, c);
+                    if(baseSet != null)
                     {
-                        ds = new DFAState();
-                        ds.NfaStatesSet = set;
-                        ds.Accpet = AcceptingStr;
-                        StatesSet.Add(ds);
-                        UnmarkQueue.Enqueue(ds);
+                        HashSet<NFAState> set = NFAStateMachine.GetEClousre(baseSet, ref AcceptingStr);
+                        DFAState ds = StatesSet.IsNFASetExisted(set);
+                        if (ds == null)
+                        {
+                            ds = new DFAState();
+                            ds.NfaStatesSet = set;
+                            ds.Accpet = AcceptingStr;
+                            StatesSet.Add(ds);
+                            UnmarkQueue.Enqueue(ds);
+                        }
+                        cur[c] = ds;
                     }
-                    cur[c] = ds;
                 }
             }
             
             return start;
         }
 
-        void DumpAllStates()
+        public void DumpAllStates()
         {
- 
+            foreach(var state in StatesSet)
+            {
+                Console.WriteLine("-------------State ID:{0}-----------------------", state.ID);
+                foreach (var key in state.NextStateTable.Keys)
+                {
+                    Console.WriteLine("key: {0}, next state: {1} ", key, state[key].ID);
+                } 
+            }
         }
     }
 
