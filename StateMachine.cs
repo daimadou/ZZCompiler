@@ -583,12 +583,34 @@ namespace ZzCompiler
         {
             foreach(var state in StatesSet)
             {
-                Console.WriteLine("-------------State ID:{0}-----------------------", state.ID);
+                bool isAccept = state.Accpet == null ? false : true;
+                Console.WriteLine("-------------State ID:{0} Accept State:{1}-----------------------", state.ID, isAccept);
                 foreach (var key in state.NextStateTable.Keys)
-                {
-                    Console.WriteLine("key: {0}, next state: {1} ", key, state[key].ID);
+                {   
+                    Console.WriteLine("key: {0}, next state: {1}", key, state[key].ID);
                 } 
             }
+        }
+
+
+    }
+
+    class DFAMachineMin
+    {
+        class Group
+        {
+            static int id;
+            public int ID
+            {
+                get;
+                private set;
+            }
+
+            public Group()
+            {
+                ID = id++;
+            }
+
         }
     }
 
