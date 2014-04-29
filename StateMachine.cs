@@ -606,12 +606,111 @@ namespace ZzCompiler
                 private set;
             }
 
+            List<DFAState> Contents;
+            public void Add(DFAState state)
+            {
+                Contents.Add(state);
+            }
+
+            public int Count { get { return Contents.Count; } }
+
+            public List<DFAState> GetContens
+            {
+                get {return Contents;}
+            }
+
+            private void ClearContent()
+            {
+                Contents = null;
+            }
+
             public Group()
             {
                 ID = id++;
+                Contents = new List<DFAState>();
             }
 
+            Dictionary<char, Group> JumpTable;
+            public Group this[char c]
+            {
+                set 
+                {
+                    JumpTable[c] = value;
+                }
+                get 
+                {
+                    Group ret = null;
+                    JumpTable.TryGetValue(c, out ret);
+                    return ret;
+                }
+            }
         }
+        private List<Group> GroupsList;
+        private Dictionary<DFAState, Group> FindGroup;
+
+        public DFAMachineMin()
+        {
+            GroupsList = new List<Group>();
+            FindGroup = new Dictionary<DFAState, Group>();
+        }
+
+        private void InitialSplit(List<DFAState> DFAStates)
+        {
+            Group group1 = new Group();
+            Group group2 = new Group();
+            foreach (var state in DFAStates)
+            {
+                if (state.Accpet != null)
+                {
+                    group2.Add(state);
+                    FindGroup[state] = group2;
+                }
+                else
+                {
+                    group1.Add(state);
+                    FindGroup[state] = group1;
+                }
+            }
+            GroupsList.Add(group1);
+            GroupsList.Add(group2);
+        }
+
+        public void MininzeDFAStates(List<DFAState> DFAStates)
+        {
+            InitialSplit(DFAStates);
+            foreach (var CurGroup in GroupsList)
+            {
+                Group NewGroup = new Group();
+                List<DFAState> contents = CurGroup.GetContens;
+                DFAState first = contents.Count > 0? contents[0]:null;
+                DFAState next = contents.Count > 1? contents[1]:null;
+                while (next != null && first != null)
+                {
+                    for (char c = (char)0; c < 255; c++)
+                    {
+                        DFAState gotoFirst = null;
+                        DFAState gotoNext = null;
+                        first.NextStateTable.TryGetValue(c, out gotoFirst);
+                        next.NextStateTable.TryGetValue(c, out gotoNext);
+
+                        if (gotoFirst != null && gotoNext != null && FindGroup[gotoFirst] != FindGroup[gotoNext])
+                        {
+                            NewGroup.Add(next);
+                        }
+                    }
+                    next = contents.IndexOf(next) + 1 < contents.Count ? contents[contents.IndexOf(next) + 1] : null;
+                }
+                
+                if(NewGroup.Count>0)
+                {
+                    GroupsList.Add(NewGroup);
+                }
+            }
+
+            //needs to build states
+
+        }
+
     }
 
     class StateMachine
