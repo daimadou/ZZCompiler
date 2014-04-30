@@ -16,8 +16,8 @@ namespace ZzCompiler
         public enum AnchorLabel { NONE = 0, START, END };
         public int edge{set; get;}
         public HashSet<char> characterSet;
-        public static int ID = 0;
-        public int id;
+        public static int IDCounter = 0;
+        public int ID;
 
         public NFAState next;
         public NFAState next2;
@@ -44,7 +44,7 @@ namespace ZzCompiler
             next2 = null;
             isAccpetState = false;
             anchor = (int)AnchorLabel.NONE;
-            id = ID++;
+            ID = IDCounter++;
             accept = null;
         }
 
@@ -62,6 +62,11 @@ namespace ZzCompiler
             this.isAccpetState = nfastate.isAccpetState;
             this.anchor = nfastate.anchor;
             return true;
+        }
+
+        public static void RefreshID()
+        {
+            IDCounter = 0;
         }
     }
 
@@ -104,12 +109,6 @@ namespace ZzCompiler
         {
             curIndex -= moveStep;
         }
-
-        private bool IsEnd()
-        {
-            return curIndex < innerExpression.Length && innerExpression[curIndex] == '$';
-        }
-        
 
         public NFAStateMachine()
         {
@@ -154,7 +153,7 @@ namespace ZzCompiler
                 Expr(ref start, ref end, ref index);
             }
 
-            if (IsEnd())
+            if (curIndex < innerExpression.Length && innerExpression[curIndex] == '$')
             {
                 end.next = new NFAState();
                 StateList.Add(end);
@@ -254,35 +253,43 @@ namespace ZzCompiler
             NFAState newEnd = null;
 
             term(ref start, ref end, ref index);
-            char c = GetCurChar();
-
-            if (c == '*' || c == '+' || c == '?')
+            if (curIndex < innerExpression.Length)
             {
-                newStart = new NFAState();
-                newEnd = new NFAState();
-                StateList.Add(newStart);
-                StateList.Add(newEnd);
+                char c = GetCurChar();
 
-                newStart.next = start;
-                end.next = newEnd;
-
-                if (c == '*' || c == '?')
+                if (c == '*' || c == '+' || c == '?')
                 {
-                    newStart.next2 = newEnd;
-                }
+                    newStart = new NFAState();
+                    newEnd = new NFAState();
+                    StateList.Add(newStart);
+                    StateList.Add(newEnd);
 
-                if (c == '*' || c == '+')
+                    newStart.next = start;
+                    end.next = newEnd;
+
+                    if (c == '*' || c == '?')
+                    {
+                        newStart.next2 = newEnd;
+                    }
+
+                    if (c == '*' || c == '+')
+                    {
+                        end.next2 = start;
+                    }
+
+                    start = newStart;
+                    end = newEnd;
+                }
+                else
                 {
-                    end.next2 = start;
+                    RevertIndex();
                 }
-
-                start = newStart;
-                end = newEnd;
             }
             else
             {
-                RevertIndex();
+                Console.WriteLine("Something wrong");
             }
+            
         }
 
         private void term(ref NFAState start, ref NFAState end, ref int index)
@@ -478,16 +485,16 @@ namespace ZzCompiler
             {
 
                 string type = state.edge < 0 ? ((NFAState.EdgeLabel)state.edge).ToString() : ((char)state.edge).ToString(); ;
-                Console.WriteLine("State ID:{0} Type:{1}", state.id, type);
+                Console.WriteLine("State ID:{0} Type:{1}", state.ID, type);
                 if(state.next!=null)
                 {
                     type = state.next.edge < 0 ? ((NFAState.EdgeLabel)state.next.edge).ToString() : ((char)state.next.edge).ToString();
-                    Console.WriteLine("---->next ID:{0} Type:{1}", state.next.id, type);
+                    Console.WriteLine("---->next ID:{0} Type:{1}", state.next.ID, type);
                 }
                 if(state.next2!=null)
                 {
                     type = state.next2.edge < 0 ? ((NFAState.EdgeLabel)state.next2.edge).ToString() : ((char)state.next2.edge).ToString();
-                    Console.WriteLine("---->next ID:{0} Type:{1}", state.next2.id, type);
+                    Console.WriteLine("---->next ID:{0} Type:{1}", state.next2.ID, type);
                 }
         
             }
@@ -496,7 +503,7 @@ namespace ZzCompiler
 
     class DFAState
     {
-        private static int Count = 0;
+        private static int Counter = 0;
         public int ID;
         public bool Mark;
         public HashSet<NFAState> NfaStatesSet;
@@ -504,7 +511,7 @@ namespace ZzCompiler
         public string Accpet;
         public DFAState()
         {
-            ID = Count++;
+            ID = Counter++;
             Mark = false;
             NfaStatesSet = null;
             NextStateTable = new Dictionary<char,DFAState>();
@@ -529,15 +536,24 @@ namespace ZzCompiler
                 }
             }
         }
+
+        public static void RefreshID()
+        {
+            Counter = 0;
+        }
     }
 
   
     class DFAStateMachine
     {
-        List<DFAState> StatesSet;
+        public List<DFAState> Contents
+        {
+            get; 
+            private set;
+        }
         public DFAStateMachine()
         {
-            StatesSet = new List<DFAState>();
+            Contents = new List<DFAState>();
         }
 
         public DFAState GenerateDFAMachine(NFAState s)
@@ -550,7 +566,7 @@ namespace ZzCompiler
             cur.NfaStatesSet = new HashSet<NFAState>();
             cur.NfaStatesSet.Add(s);
             cur.NfaStatesSet = NFAStateMachine.GetEClousre(cur.NfaStatesSet, ref acceptStr);
-            StatesSet.Add(cur);
+            Contents.Add(cur);
 
             while (UnmarkQueue.Count > 0)
             {
@@ -562,13 +578,13 @@ namespace ZzCompiler
                     if(baseSet != null)
                     {
                         HashSet<NFAState> set = NFAStateMachine.GetEClousre(baseSet, ref AcceptingStr);
-                        DFAState ds = StatesSet.IsNFASetExisted(set);
+                        DFAState ds = Contents.IsNFASetExisted(set);
                         if (ds == null)
                         {
                             ds = new DFAState();
                             ds.NfaStatesSet = set;
                             ds.Accpet = AcceptingStr;
-                            StatesSet.Add(ds);
+                            Contents.Add(ds);
                             UnmarkQueue.Enqueue(ds);
                         }
                         cur[c] = ds;
@@ -581,7 +597,7 @@ namespace ZzCompiler
 
         public void DumpAllStates()
         {
-            foreach(var state in StatesSet)
+            foreach(var state in Contents)
             {
                 bool isAccept = state.Accpet == null ? false : true;
                 Console.WriteLine("-------------State ID:{0} Accept State:{1}-----------------------", state.ID, isAccept);
@@ -595,56 +611,72 @@ namespace ZzCompiler
 
     }
 
-    class DFAMachineMin
+
+    class Group
     {
-        class Group
+        static int IDCounter;
+        public int ID
         {
-            static int id;
-            public int ID
+            get;
+            private set;
+        }
+
+        public string Accept;
+
+        HashSet<DFAState> Contents;
+        public void Add(DFAState state)
+        {
+            Contents.Add(state);
+        }
+
+        public int Count { get { return Contents.Count; } }
+
+        public HashSet<DFAState> GetContens
+        {
+            get { return Contents; }
+        }
+
+        private void ClearContent()
+        {
+            Contents = null;
+        }
+
+        public Group()
+        {
+            ID = IDCounter++;
+            Contents = new HashSet<DFAState>();
+            Accept = null;
+            JumpTable = new Dictionary<char, Group>();
+        }
+
+        public Dictionary<char, Group> JumpTable;
+        public ICollection<char> GetKeys
+        {
+            get { return JumpTable.Keys; }
+        }
+        public Group this[char c]
+        {
+            set
             {
-                get;
-                private set;
+                JumpTable[c] = value;
             }
-
-            List<DFAState> Contents;
-            public void Add(DFAState state)
+            get
             {
-                Contents.Add(state);
-            }
-
-            public int Count { get { return Contents.Count; } }
-
-            public List<DFAState> GetContens
-            {
-                get {return Contents;}
-            }
-
-            private void ClearContent()
-            {
-                Contents = null;
-            }
-
-            public Group()
-            {
-                ID = id++;
-                Contents = new List<DFAState>();
-            }
-
-            Dictionary<char, Group> JumpTable;
-            public Group this[char c]
-            {
-                set 
-                {
-                    JumpTable[c] = value;
-                }
-                get 
-                {
-                    Group ret = null;
-                    JumpTable.TryGetValue(c, out ret);
-                    return ret;
-                }
+                Group ret = null;
+                JumpTable.TryGetValue(c, out ret);
+                return ret;
             }
         }
+
+        public static void RefreshID()
+        {
+            IDCounter = 0;
+        }
+    }
+
+    class DFAMachineMin
+    {
+        
         private List<Group> GroupsList;
         private Dictionary<DFAState, Group> FindGroup;
 
@@ -678,12 +710,13 @@ namespace ZzCompiler
         public void MininzeDFAStates(List<DFAState> DFAStates)
         {
             InitialSplit(DFAStates);
-            foreach (var CurGroup in GroupsList)
+            for (int i = 0; i < GroupsList.Count; i++ )
             {
+                var CurGroup = GroupsList[i];
                 Group NewGroup = new Group();
-                List<DFAState> contents = CurGroup.GetContens;
-                DFAState first = contents.Count > 0? contents[0]:null;
-                DFAState next = contents.Count > 1? contents[1]:null;
+                List<DFAState> contents = CurGroup.GetContens.ToList();
+                DFAState first = contents.Count > 0 ? contents[0] : null;
+                DFAState next = contents.Count > 1 ? contents[1] : null;
                 while (next != null && first != null)
                 {
                     for (char c = (char)0; c < 255; c++)
@@ -693,23 +726,87 @@ namespace ZzCompiler
                         first.NextStateTable.TryGetValue(c, out gotoFirst);
                         next.NextStateTable.TryGetValue(c, out gotoNext);
 
-                        if (gotoFirst != null && gotoNext != null && FindGroup[gotoFirst] != FindGroup[gotoNext])
+                        if (!((gotoFirst!=null && gotoNext!=null && FindGroup[gotoFirst] == FindGroup[gotoNext])||(gotoFirst==null&&gotoNext==null)))
                         {
                             NewGroup.Add(next);
+                            FindGroup[next] = NewGroup;
+                            CurGroup.GetContens.Remove(next);
+                            break;
                         }
                     }
                     next = contents.IndexOf(next) + 1 < contents.Count ? contents[contents.IndexOf(next) + 1] : null;
                 }
-                
-                if(NewGroup.Count>0)
+
+                if (NewGroup.Count > 0)
                 {
                     GroupsList.Add(NewGroup);
                 }
             }
 
-            //needs to build states
-
+            MapGroups();
+            //DumpDFAFromGourps();
+            Group.RefreshID();
+            NFAState.RefreshID();
+            DFAState.RefreshID();
         }
+
+        private void MapGroups()
+        {
+            foreach (var g in GroupsList)
+            {
+                foreach (var s in g.GetContens)
+                {
+                    for (char c = (char)0; c < 255; c++)
+                    {
+                        DFAState nexestate = null;
+                        s.NextStateTable.TryGetValue(c, out nexestate);
+                        if (nexestate != null)
+                        {
+                            g[c] = FindGroup[nexestate];
+                        }
+                    }
+                }
+                
+
+                foreach (var state in g.GetContens)
+                { 
+                    if(state.Accpet!=null)
+                    {
+                        g.Accept = state.Accpet;
+                    }
+                }
+            }
+        }
+
+        private void DumpDFAFromGourps()
+        {
+            foreach (var g in GroupsList)
+            {
+                Console.WriteLine("Group ID:{0}", g.ID);
+                foreach (var s in g.GetContens.ToList())
+                {
+                    Console.WriteLine("----->DFA State:{0}", s.ID);
+                }
+
+            }
+        }
+
+        public void DumpAllGroups()
+        {
+            foreach (var g in GroupsList)
+            {
+                bool isAccept = g.Accept == null ? false : true;
+                Console.WriteLine("-------------Group ID:{0} Accept State:{1}-----------------------", g.ID, isAccept);
+                if (g.GetContens.Count > 0)
+                {
+                    foreach (var key in g.GetKeys)
+                    {
+                        Console.WriteLine("key: {0}, next state: {1}", key, g[key].ID);
+                    } 
+                }     
+            }
+        }
+
 
     }
 

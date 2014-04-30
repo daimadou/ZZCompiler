@@ -14,10 +14,11 @@ namespace ZzCompiler
         static void Main(string[] args)
         {
             Program p = new Program();
-            p.TestGetTokenNameAndExpr();
+            p.TestGetTokenNameAndExpr("d*ad|dad*");
+            p.TestGetTokenNameAndExpr("a");
         }
 
-        void TestGetTokenNameAndExpr()
+        void TestGetTokenNameAndExpr(string s)
         {
             /*
             string[] lines = System.IO.File.ReadAllLines(@".\TestData\TokenNameAndExpr.txt");
@@ -30,11 +31,14 @@ namespace ZzCompiler
             }
              */
             NFAStateMachine machine = new NFAStateMachine();
-            NFAState NFAStart = machine.Machine("d*ad|dad*");
+            NFAState NFAStart = machine.Machine(s);
             machine.DumpAllStates();
             DFAStateMachine machine2 = new DFAStateMachine();
             machine2.GenerateDFAMachine(NFAStart);
             machine2.DumpAllStates();
+            DFAMachineMin minMahine = new DFAMachineMin();
+            minMahine.MininzeDFAStates(machine2.Contents);
+            minMahine.DumpAllGroups();
         }
     }
 }
