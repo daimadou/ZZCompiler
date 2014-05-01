@@ -202,11 +202,6 @@ namespace SharpLexer
                     RevertIndex();
                 }
             }
-            else
-            {
-                Console.WriteLine("Something wrong");
-            }
-
         }
 
         private void term(ref NFAState start, ref NFAState end)

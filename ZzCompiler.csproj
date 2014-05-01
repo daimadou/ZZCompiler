@@ -41,8 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Exceptions.cs" />
-    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StateMachine.cs" />
@@ -54,7 +52,7 @@
     <Folder Include="TestData\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SharpLexer\SharpLexer.csproj">
+    <ProjectReference Include="SharpLexer\SharpLexer.csproj">
       <Project>{05a69946-2a26-4863-b489-461c730c24bb}</Project>
       <Name>SharpLexer</Name>
     </ProjectReference>

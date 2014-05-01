@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 namespace SharpLexer
 {
     using Extension;
-    class DFAMachine
+    public class DFAMachine
     {
-         List<DFAState> StatesSet;
+        public List<DFAState> Contents{private set; get;}
         public DFAMachine()
         {
-            StatesSet = new List<DFAState>();
+            Contents = new List<DFAState>();
         }
 
         public DFAState GenerateDFAMachine(NFAState s)
@@ -25,7 +25,7 @@ namespace SharpLexer
             cur.Contents = new HashSet<NFAState>();
             cur.Contents.Add(s);
             cur.Contents = NFAMachine.GetEClousre(cur.Contents, ref acceptStr);
-            StatesSet.Add(cur);
+            Contents.Add(cur);
 
             while (UnmarkQueue.Count > 0)
             {
@@ -37,13 +37,13 @@ namespace SharpLexer
                     if(baseSet != null)
                     {
                         HashSet<NFAState> set = NFAMachine.GetEClousre(baseSet, ref AcceptingStr);
-                        DFAState ds = StatesSet.IsNFASetExisted(set);
+                        DFAState ds = Contents.IsNFASetExisted(set);
                         if (ds == null)
                         {
                             ds = new DFAState();
                             ds.Contents = set;
                             ds.Accept = AcceptingStr;
-                            StatesSet.Add(ds);
+                            Contents.Add(ds);
                             UnmarkQueue.Enqueue(ds);
                         }
                         cur[c] = ds;
@@ -56,14 +56,14 @@ namespace SharpLexer
 
         public void DumpAllStates()
         {
-            foreach(var state in StatesSet)
+            foreach(var state in Contents)
             {
                 Console.WriteLine(state);
             }
         }
     }
 
-    class DFAMachineMin
+    public class DFAMachineMin
     {
         private List<Group> Contents;
         private Dictionary<DFAState, Group> FindGroup;
@@ -172,6 +172,14 @@ namespace SharpLexer
                 {
                     Console.WriteLine("----->DFA State:{0}", s.ID);
                 }
+            }
+        }
+
+        public void DumpAllStates()
+        {
+            foreach (var s in this.Contents)
+            {
+                Console.WriteLine(s);
             }
         }
     }

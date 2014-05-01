@@ -81,31 +81,32 @@ namespace SharpLexer
         public override string ToString()
         {
             string AcceptToken = this.Accept == null ? "NONE" : this.Accept;
-            StringBuilder ret = new StringBuilder(string.Format("NFA State, ID:{0} Type:{1} Accept:{2}", this.ID, this.Edge, AcceptToken));
+            StringBuilder ret = new StringBuilder(string.Format("NFA State, ID:{0} Type:{1} Accept:{2}\n", this.ID, this.Edge, AcceptToken));
             if (this.Next != null)
             {
                 if(this.CharacterSet !=null)
                 {
-                    ret.Append("\nkeys:");
+                    ret.Append("keys:");
                     foreach(var val in CharacterSet)
                     {
                         ret.Append(String.Format(" {0}", val));
                     }
                 }
-                ret.Append(String.Format("------->Next: {0}", this.Next.ID));
+                ret.Append("\n");
+                ret.Append(String.Format("------->Next: {0}\n", this.Next.ID));
             }
 
             if (this.Next2 != null)
             {
-                ret.Append(String.Format("------->Next2: {0}", this.Next2.ID));
+                ret.Append(String.Format("------->Next2: {0}\n", this.Next2.ID));
             }
             return ret.ToString();
         }
     }
 
-    abstract class StateWithJumpTable:State
+    public abstract class StateWithJumpTable:State
     {
-        Dictionary<char, State> Table;
+        public Dictionary<char, State> Table{private set; get;}
         public StateWithJumpTable()
         {
             Table = new Dictionary<char, State>();
@@ -144,10 +145,10 @@ namespace SharpLexer
         public override string ToString()
         {
             string AcceptToken = this.Accept == null ? "NONE" : this.Accept;
-            StringBuilder ret = new StringBuilder(string.Format("DFA State, ID:{0} Accept:{2}", this.ID, AcceptToken));
+            StringBuilder ret = new StringBuilder(string.Format("DFA State, ID:{0} Accept:{1}\n", this.ID, AcceptToken));
             foreach (var key in this.GetKeys)
             {
-                ret.Append(String.Format("------>key: {0}, next state: {1}", key, this[key].ID));
+                ret.Append(String.Format("------>key: {0}, next state: {1}\n", key, this[key].ID));
             }
             return ret.ToString();
         }
@@ -175,10 +176,10 @@ namespace SharpLexer
         public override string ToString()
         {
             string AcceptToken = this.Accept == null ? "NONE" : this.Accept;
-            StringBuilder ret = new StringBuilder(string.Format("Group State, ID:{0} Accept:{2}", this.ID, AcceptToken));
+            StringBuilder ret = new StringBuilder(string.Format("Group State, ID:{0} Accept:{1}\n", this.ID, AcceptToken));
             foreach (var key in this.GetKeys)
             {
-                ret.Append(String.Format("------>key: {0}, next state: {1}", key, this[key].ID));
+                ret.Append(String.Format("------>key: {0}, next state: {1}\n", key, this[key].ID));
             }
             return ret.ToString(); 
         }

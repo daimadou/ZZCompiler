@@ -35,12 +35,14 @@ namespace ZzCompiler
 
             NFAState NFAStart = nfaMachine.AddRule(s, "test"); ;
             nfaMachine.DumpAllStates();
+            NFAState.RefreshID();
             DFAMachine machine2 = new DFAMachine();
             machine2.GenerateDFAMachine(NFAStart);
             machine2.DumpAllStates();
+            NFAState.RefreshID();
             DFAMachineMin minMahine = new DFAMachineMin();
             minMahine.MininzeDFAStates(machine2.Contents);
-            minMahine.DumpAllGroups();
+            minMahine.DumpAllStates();
         }
     }
 }
