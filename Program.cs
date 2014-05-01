@@ -7,6 +7,7 @@ using System.IO;
 
 namespace ZzCompiler
 {
+    using SharpLexer;
     class Program
     {
 
@@ -30,10 +31,11 @@ namespace ZzCompiler
                 Console.WriteLine("TokenName:{0} Expr:{1}", tokenName, expr);
             }
              */
-            NFAStateMachine machine = new NFAStateMachine();
-            NFAState NFAStart = machine.Machine(s);
-            machine.DumpAllStates();
-            DFAStateMachine machine2 = new DFAStateMachine();
+            NFAMachine nfaMachine = new NFAMachine();
+
+            NFAState NFAStart = nfaMachine.AddRule(s, "test"); ;
+            nfaMachine.DumpAllStates();
+            DFAMachine machine2 = new DFAMachine();
             machine2.GenerateDFAMachine(NFAStart);
             machine2.DumpAllStates();
             DFAMachineMin minMahine = new DFAMachineMin();

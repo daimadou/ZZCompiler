@@ -7,7 +7,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ZzCompiler
-{
+{ 
+#if STATE_MACHINE
     using Extension;
 
     class NFAState
@@ -825,6 +826,6 @@ namespace ZzCompiler
         }
 
     }
- 
+#endif
 }
 
