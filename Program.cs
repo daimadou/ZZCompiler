@@ -15,7 +15,7 @@ namespace ZzCompiler
         static void Main(string[] args)
         {
             Program p = new Program();
-            p.TestGetTokenNameAndExpr("d*ad|dad*");
+            //p.TestGetTokenNameAndExpr("d*ad|dad*");
             p.TestGetTokenNameAndExpr("a");
         }
 
@@ -33,7 +33,8 @@ namespace ZzCompiler
              */
             NFAMachine nfaMachine = new NFAMachine();
 
-            NFAState NFAStart = nfaMachine.AddRule(s, "test"); ;
+            NFAState NFAStart = nfaMachine.AddRule(s, "test");
+            NFAStart = nfaMachine.AddRule("Zhicheng Zhu", "test2");
             nfaMachine.DumpAllStates();
             NFAState.RefreshID();
             DFAMachine machine2 = new DFAMachine();

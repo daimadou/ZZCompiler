@@ -112,7 +112,7 @@ namespace SharpLexer
                         DFAState gotoFirst = (DFAState)first[c];
                         DFAState gotoNext = (DFAState)next[c];
                      
-                        if (!((gotoFirst != null && gotoNext != null && FindGroup[gotoFirst] == FindGroup[gotoNext]) || (gotoFirst == null && gotoNext == null)))
+                        if (!((gotoFirst != null && gotoNext != null && FindGroup[gotoFirst] == FindGroup[gotoNext]) || (gotoFirst == null && gotoNext == null))||first.Accept != next.Accept)
                         {
                             NewGroup.Add(next);
                             FindGroup[next] = NewGroup;

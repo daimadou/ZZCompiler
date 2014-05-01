@@ -391,7 +391,7 @@ namespace SharpLexer
 
         public void DumpAllStates()
         {
-            Console.WriteLine("Expression:" + InnerExpression);
+            //Console.WriteLine("Expression:" + InnerExpression);
             foreach (NFAState state in Contents)
             {
                 Console.WriteLine(state);
