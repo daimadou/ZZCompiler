@@ -95,7 +95,7 @@ namespace SharpLexer
             Contents.Add(group2);
         }
 
-        public void MininzeDFAStates(List<DFAState> DFAStates)
+        public void MininzeDFAStates(List<DFAState> DFAStates, ref State start)
         {
             InitialSplit(DFAStates);
             for (int i = 0; i < Contents.Count; i++)
@@ -134,6 +134,7 @@ namespace SharpLexer
             Group.RefreshID();
             NFAState.RefreshID();
             DFAState.RefreshID();
+            start = FindGroup[(DFAState)start];
         }
 
         private void MapGroups()

@@ -106,10 +106,10 @@ namespace SharpLexer
 
     public abstract class StateWithJumpTable:State
     {
-        public Dictionary<char, State> Table{private set; get;}
+        public Dictionary<char, StateWithJumpTable> Table { private set; get; }
         public StateWithJumpTable()
         {
-            Table = new Dictionary<char, State>();
+            Table = new Dictionary<char, StateWithJumpTable>();
         }
 
         public ICollection<char> GetKeys
@@ -117,11 +117,11 @@ namespace SharpLexer
             get { return Table.Keys; }
         }
 
-        public State this[char c]
+        public StateWithJumpTable this[char c]
         {
             get
             {
-                State ret = null;
+                StateWithJumpTable ret = null;
                 Table.TryGetValue(c, out ret);
                 return ret;
             }
