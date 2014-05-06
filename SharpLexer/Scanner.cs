@@ -40,14 +40,14 @@ namespace SharpLexer
     {
         enum Status { START, PROCESS, END };
         State Start;
-        NFAMachine nfaMachine;
+        NFAStateMachine nfaMachine;
         string Contents;
         int CurIndex;
         Status CurStatus;
 
         public Scanner()
         {
-            nfaMachine = new NFAMachine();
+            nfaMachine = new NFAStateMachine();
             Start = null;
             Contents = null;
             CurIndex = 0;
@@ -62,10 +62,10 @@ namespace SharpLexer
         public void Generate()
         {
             NFAState.RefreshID();
-            DFAMachine dfaMachine = new DFAMachine();
+            DFAStateMachine dfaMachine = new DFAStateMachine();
             Start = dfaMachine.GenerateDFAMachine((NFAState)Start);
             State.RefreshID();
-            DFAMachineMin minMachine = new DFAMachineMin();
+            MinDFAStateMachine minMachine = new MinDFAStateMachine();
             minMachine.MininzeDFAStates(dfaMachine.Contents, ref Start);
         }
 

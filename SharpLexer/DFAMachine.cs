@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace SharpLexer
 {
     using Extension;
-    public class DFAMachine
+    public class DFAStateMachine
     {
         public List<DFAState> Contents{private set; get;}
-        public DFAMachine()
+        public DFAStateMachine()
         {
             Contents = new List<DFAState>();
         }
@@ -24,7 +24,7 @@ namespace SharpLexer
             String acceptStr = null;
             cur.Contents = new HashSet<NFAState>();
             cur.Contents.Add(s);
-            cur.Contents = NFAMachine.GetEClousre(cur.Contents, ref acceptStr);
+            cur.Contents = NFAStateMachine.GetEClousre(cur.Contents, ref acceptStr);
             Contents.Add(cur);
 
             while (UnmarkQueue.Count > 0)
@@ -33,10 +33,10 @@ namespace SharpLexer
                 for (char c = (char)0; c < 255; c++)
                 {
                     String AcceptingStr = null;
-                    HashSet<NFAState> baseSet = NFAMachine.Move(cur.Contents, c);
+                    HashSet<NFAState> baseSet = NFAStateMachine.Move(cur.Contents, c);
                     if(baseSet != null)
                     {
-                        HashSet<NFAState> set = NFAMachine.GetEClousre(baseSet, ref AcceptingStr);
+                        HashSet<NFAState> set = NFAStateMachine.GetEClousre(baseSet, ref AcceptingStr);
                         DFAState ds = Contents.IsNFASetExisted(set);
                         if (ds == null)
                         {
@@ -63,12 +63,12 @@ namespace SharpLexer
         }
     }
 
-    public class DFAMachineMin
+    public class MinDFAStateMachine
     {
         private List<Group> Contents;
         private Dictionary<DFAState, Group> FindGroup;
 
-        public DFAMachineMin()
+        public MinDFAStateMachine()
         {
             Contents = new List<Group>();
             FindGroup = new Dictionary<DFAState, Group>();

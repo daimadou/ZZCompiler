@@ -6,14 +6,27 @@ using System.Threading.Tasks;
 
 namespace SharpLexer
 {
-    public class NFAMachine
+    public class NFAStateMachine
     {
         string InnerExpression;
         int CurIndex;
         int MoveSteps;
         List<NFAState> Contents;
         NFAState PreStart;
-        public NFAMachine()
+        
+        class Macro
+        {
+            public NFAState start;
+            public NFAState end;
+            public Macro(NFAState start, NFAState end)
+            {
+                this.start = start;
+                this.end = end;
+            }
+        }
+
+        Dictionary<string, Macro> Macros;
+        public NFAStateMachine()
         {
             Contents = new List<NFAState>();
             CurIndex = 0;
@@ -52,15 +65,24 @@ namespace SharpLexer
             CurIndex -= MoveSteps;
         }
 
- 
+        public void AddMacro(string regex, string macroName)
+        {
+            GenerateInnerExpression(regex);
+            NFAState start = null;
+            NFAState end = null;
+            Expr(ref start, ref end);
+            if (Macros == null)
+            {
+                Macros = new Dictionary<string, Macro>();
+            }
+            Macros.Add(macroName, new Macro(start, end));
+        }
        
         public NFAState AddRule(string regex, string tokenName)
         {
             NFAState start = null;
             NFAState end = null;
-            this.InnerExpression = regex;
-            this.CurIndex = 0;
-            this.MoveSteps = 1;
+            GenerateInnerExpression(regex);
            
             if (GetCurChar() == '^')
             {
@@ -89,6 +111,13 @@ namespace SharpLexer
             ret.Next2 = this.PreStart;
             this.PreStart = ret;
             return ret;
+        }
+
+        private void GenerateInnerExpression(string regex)
+        {
+            this.InnerExpression = regex;
+            this.CurIndex = 0;
+            this.MoveSteps = 1;
         }
 
         private void Expr(ref NFAState start, ref NFAState end)
@@ -225,6 +254,23 @@ namespace SharpLexer
                 {
                     Console.Error.WriteLine("{0} is invlaid ", c);
                     throw new InvalidCharaterException(c + " is invlaid");
+                }
+            }
+            else if (c == '%' && MoveSteps == 1 )
+            {
+                StringBuilder sb = new StringBuilder();
+                c = GetCurChar();
+                while (!(c == '%' && MoveSteps==1))
+                {
+                    sb.Append(c);
+                    c = GetCurChar();
+                }
+
+                if(c=='%'&& MoveSteps==1 && sb.Length != 0)
+                {
+                    Macro m = Macros[sb.ToString()];
+                    start = m.start;
+                    end = m.end;
                 }
             }
             else
