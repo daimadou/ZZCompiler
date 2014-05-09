@@ -14,18 +14,7 @@ namespace SharpLexer
         List<NFAState> Contents;
         NFAState PreStart;
         
-        class Macro
-        {
-            public NFAState start;
-            public NFAState end;
-            public Macro(NFAState start, NFAState end)
-            {
-                this.start = start;
-                this.end = end;
-            }
-        }
-
-        Dictionary<string, Macro> Macros;
+        Dictionary<string, string> Macros;
         public NFAStateMachine()
         {
             Contents = new List<NFAState>();
@@ -65,24 +54,20 @@ namespace SharpLexer
             CurIndex -= MoveSteps;
         }
 
-        public void AddMacro(string regex, string macroName)
+        public void AddMacro(string macroName, string regex)
         {
-            GenerateInnerExpression(regex);
-            NFAState start = null;
-            NFAState end = null;
-            Expr(ref start, ref end);
             if (Macros == null)
             {
-                Macros = new Dictionary<string, Macro>();
+                Macros = new Dictionary<string, string>();
             }
-            Macros.Add(macroName, new Macro(start, end));
+            Macros.Add(macroName, regex);
         }
        
         public NFAState AddRule(string regex, string tokenName)
         {
             NFAState start = null;
             NFAState end = null;
-            GenerateInnerExpression(regex);
+            GenerateInnerExpression(regex, 0);
            
             if (GetCurChar() == '^')
             {
@@ -113,10 +98,10 @@ namespace SharpLexer
             return ret;
         }
 
-        private void GenerateInnerExpression(string regex)
+        private void GenerateInnerExpression(string regex, int index)
         {
             this.InnerExpression = regex;
-            this.CurIndex = 0;
+            this.CurIndex = index;
             this.MoveSteps = 1;
         }
 
@@ -268,9 +253,12 @@ namespace SharpLexer
 
                 if(c=='%'&& MoveSteps==1 && sb.Length != 0)
                 {
-                    Macro m = Macros[sb.ToString()];
-                    start = m.start;
-                    end = m.end;
+                    int preIndex = CurIndex;
+                    string preInnerExpression = this.InnerExpression;
+                    string regex = Macros[sb.ToString()];
+                    this.GenerateInnerExpression(regex, 0);
+                    Expr(ref start, ref end);
+                    this.GenerateInnerExpression(regex, preIndex);
                 }
             }
             else

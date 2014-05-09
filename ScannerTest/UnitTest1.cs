@@ -28,6 +28,18 @@ namespace ScannerTest
         }
 
         [TestMethod]
+        public void TestMacro()
+        {
+            Scanner scan = new Scanner();
+            scan.
+            scan.AddRule(regex, TokenName);
+            scan.Generate();
+            scan.AddSource(input);
+            return scan.ReadOneToken();
+ 
+        }
+
+        [TestMethod]
         public void TestReadFail()
         {
             Assert.IsNull(TestSingleRead("int", "KEYWORD", "a"));

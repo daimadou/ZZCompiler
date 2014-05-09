@@ -59,6 +59,11 @@ namespace SharpLexer
             Start = nfaMachine.AddRule(regex, tokenName);
         }
 
+        public void AddMacro(string macroName, string regex)
+        {
+            nfaMachine.AddMacro(macroName, regex);
+        }
+
         public void Generate()
         {
             NFAState.RefreshID();
