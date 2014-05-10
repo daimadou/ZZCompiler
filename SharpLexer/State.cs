@@ -56,6 +56,12 @@ namespace SharpLexer
             return true;
         }
 
+
+        public void ReplaceCharSet(HashSet<char> set)
+        {
+            this.CharacterSet = set;
+            this.Edge = EdgeLabel.CCL;
+        }
         public void AddChar(char c)
         {
             if (CharacterSet == null)

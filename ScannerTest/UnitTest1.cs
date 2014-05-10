@@ -4,8 +4,6 @@ using SharpLexer;
 namespace ScannerTest
 {
     [TestClass]
-  
-
     public class UnitTest1
     {        
         [TestMethod]
@@ -31,12 +29,12 @@ namespace ScannerTest
         public void TestMacro()
         {
             Scanner scan = new Scanner();
-            scan.
-            scan.AddRule(regex, TokenName);
+            scan.AddMacro("[1234567890]", "Digital");
+            scan.AddRule("%Digtial%*", "num");
             scan.Generate();
-            scan.AddSource(input);
-            return scan.ReadOneToken();
- 
+            scan.AddSource("123");
+            Token t =  scan.ReadOneToken();
+            Assert.IsTrue(new Token("num", "123") == t);
         }
 
         [TestMethod]

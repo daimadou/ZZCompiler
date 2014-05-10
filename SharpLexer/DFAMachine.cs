@@ -30,7 +30,7 @@ namespace SharpLexer
             while (UnmarkQueue.Count > 0)
             {
                 cur = UnmarkQueue.Dequeue();
-                for (char c = (char)0; c < 255; c++)
+                for (char c = (char)0; c < 256; c++)
                 {
                     String AcceptingStr = null;
                     HashSet<NFAState> baseSet = NFAStateMachine.Move(cur.Contents, c);
@@ -107,7 +107,7 @@ namespace SharpLexer
                 DFAState next = contents.Count > 1 ? contents[1] : null;
                 while (next != null && first != null)
                 {
-                    for (char c = (char)0; c < 255; c++)
+                    for (char c = (char)0; c < 256; c++)
                     {
                         DFAState gotoFirst = (DFAState)first[c];
                         DFAState gotoNext = (DFAState)next[c];
@@ -143,7 +143,7 @@ namespace SharpLexer
             {
                 foreach (var s in g.Contents)
                 {
-                    for (char c = (char)0; c < 255; c++)
+                    for (char c = (char)0; c < 256; c++)
                     {
                         DFAState nexestate = (DFAState)s[c];
                         if (nexestate != null)

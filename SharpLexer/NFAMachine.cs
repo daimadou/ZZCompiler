@@ -112,8 +112,9 @@ namespace SharpLexer
             NFAState cur = null;
             CatExpr(ref start, ref end);
 
-            while (CurIndex < InnerExpression.Length && GetCurChar() == '|')
+            while (CurIndex < InnerExpression.Length && ChurChar == '|')
             {
+                GetCurChar();
                 CatExpr(ref nextStart, ref nextEnd);
                 cur = new NFAState();
                 Contents.Add(cur);
@@ -127,6 +128,11 @@ namespace SharpLexer
                 nextEnd.Next = cur;
                 end = cur;
             }
+        }
+
+        private char ChurChar
+        {
+            get { return InnerExpression[CurIndex]; }
         }
 
         private void CatExpr(ref NFAState start, ref NFAState end)
@@ -258,7 +264,7 @@ namespace SharpLexer
                     string regex = Macros[sb.ToString()];
                     this.GenerateInnerExpression(regex, 0);
                     Expr(ref start, ref end);
-                    this.GenerateInnerExpression(regex, preIndex);
+                    this.GenerateInnerExpression(preInnerExpression, preIndex);
                 }
             }
             else
@@ -269,27 +275,9 @@ namespace SharpLexer
                 Contents.Add(end);
                 start.Next = end;
 
-                if (!(c == '.' || c == '['))
+                if (!(c == '.' || c == '[')||MoveSteps==2)
                 {
-                    if (MoveSteps == 2)
-                    {
-                        switch (c)
-                        {
-                            case 'w':
-                                AddLetters(start);
-                                break;
-                            case 'd':
-                                AddDigits(start);
-                                break;
-                            default:
-                                start.AddChar(c);
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        start.AddChar(c);
-                    }
+                    start.AddChar(c);
                 }
                 else
                 {
@@ -300,26 +288,32 @@ namespace SharpLexer
 
         private void AddSymbolsFromTable(NFAState start, char c)
         {
-            if (c == '.')
+            if (c == '.' && MoveSteps == 1)
             {
 
-                for (char i = (char)0; i < 255; i++)
+                for (char i = (char)0; i < 256; i++)
                 {
                     start.AddChar(i);
                 }
             }
             else
             {
-                if (c == '[')
+                if (c == '[' && MoveSteps == 1)
                 {
                     if (CurIndex < InnerExpression.Length)
                     {
                         c = GetCurChar();
+                        char firstChar = c;
+                        int firstMoveSteps = MoveSteps;
+                        HashSet<char> charset = new HashSet<char>();
                         while (CurIndex < InnerExpression.Length + 1)
                         {
-                            if (c != ']')
+                            if (!(c ==']'&& MoveSteps==1))
                             {
-                                start.AddChar(c);
+                                if (!(c == '^' && MoveSteps == 1))
+                                {
+                                    charset.Add(c);
+                                }
                             }
                             else
                             {
@@ -328,10 +322,26 @@ namespace SharpLexer
                             c = GetCurChar();
                         } 
 
-                        if (c != ']')
+                        if (!(c == ']'&& MoveSteps==1))
                         {
                             Console.Error.WriteLine("can't find ]");
                             throw new InvalidCharaterException();
+                        }
+
+                        if (firstChar == '^' && firstMoveSteps == 1)
+                        {
+                            for (char i = (char)0; i < 256; i++)
+                            {
+                                if (!charset.Contains(i))
+                                {
+                                    start.AddChar(i);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            charset.Add(firstChar);
+                            start.ReplaceCharSet(charset);
                         }
                     }
                     else
