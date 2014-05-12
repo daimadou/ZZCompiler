@@ -52,6 +52,10 @@
     <Folder Include="TestData\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="ScannerUnitTest\ScannerUnitTest.csproj">
+      <Project>{1d9e8f1d-3fb3-4049-a87e-28688cb3f922}</Project>
+      <Name>ScannerUnitTest</Name>
+    </ProjectReference>
     <ProjectReference Include="SharpLexer\SharpLexer.csproj">
       <Project>{05a69946-2a26-4863-b489-461c730c24bb}</Project>
       <Name>SharpLexer</Name>

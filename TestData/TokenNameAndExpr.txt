@@ -1,5 +1,19 @@
-TokenName:Basic EXPRESSION:this is just a test \
-TOKENNAME:                 Basic                      EXPRESSION:                this is just a test \n hahah     
-//this is a comment should be passed
-                                                                    
-this should not be passed                           
+$DIGITIAL = '[0123456789]'
+$NUMEMBER = 'abcdef'
+$LETTER = '[abcdefghijklmnopqrstuvwxyzABCEDFGHIJKLMNOPQRSTUVWXYZ]'
+$WHITESPACE = '\n| |\r\n'
+
+WHITESPACES = '$(WHITESPACE)+'
+INT = 'int'
+STRING = 'string'
+RETURN = 'RETURN'
+NUM = '$(DIGITIAL)+'
+LPAREN = '\('
+RPAREN = '\)'
+LBRACE = '{'
+RBRACE = '}'
+SEMICOLON = ';'
+PLUS = '\+'
+EQ = '='
+STRING_BODY = ''[^'\n\r]*'|"[^"\n\r]"'
+ID = '$(LETTER)+($(DIGITIAL)+|$(LETTER)+)*'                

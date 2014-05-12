@@ -113,9 +113,13 @@ namespace SharpLexer
     public abstract class StateWithJumpTable:State
     {
         public Dictionary<char, StateWithJumpTable> Table { private set; get; }
+        public Dictionary<char, int> TransTable { set; get; }
+        Dictionary<int, StateWithJumpTable> CompressedTable;
         public StateWithJumpTable()
         {
             Table = new Dictionary<char, StateWithJumpTable>();
+            CompressedTable = null;
+            TransTable = null;
         }
 
         public ICollection<char> GetKeys
@@ -123,17 +127,45 @@ namespace SharpLexer
             get { return Table.Keys; }
         }
 
+        public void CompressingTable(Dictionary<char, int> TransTable, List<char> map)
+        {
+            this.TransTable = TransTable;
+            this.CompressedTable = new Dictionary<int, StateWithJumpTable>();
+            foreach (char c in map)
+            {
+                int id = TransTable[c];
+                StateWithJumpTable s = null;
+                this.Table.TryGetValue(c, out s);
+                if (s != null)
+                {
+                    this.CompressedTable.Add(id, s);
+                }
+            }
+            this.Table = null;
+        }
+
         public StateWithJumpTable this[char c]
         {
             get
             {
                 StateWithJumpTable ret = null;
-                Table.TryGetValue(c, out ret);
+                if (CompressedTable == null && Table!= null)
+                {
+                    Table.TryGetValue(c, out ret);
+                }
+                else 
+                {
+                    int id = TransTable[c];
+                    CompressedTable.TryGetValue(id, out ret);
+                }
                 return ret;
             }
             set
             {
-                Table[c] = value;
+                if (Table != null)
+                {
+                    Table[c] = value;
+                }
             }
         }
     }

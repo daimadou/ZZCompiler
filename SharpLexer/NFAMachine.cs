@@ -21,6 +21,7 @@ namespace SharpLexer
             CurIndex = 0;
             MoveSteps = 1;
         }
+
         private char GetCurChar()
         {
 
@@ -33,7 +34,13 @@ namespace SharpLexer
                     MoveSteps = 2;
                     CurIndex += MoveSteps;
                     if (ret == 'n')
+                    {
                         ret = '\n';
+                    }
+                    else if(ret == 'r')
+                    {
+                        ret = '\r';
+                    }
                     return ret;
                 }
                 else
@@ -81,7 +88,7 @@ namespace SharpLexer
                 RevertIndex();
                 Expr(ref start, ref end);
             }
-
+            /*
             if (CurIndex < InnerExpression.Length && InnerExpression[CurIndex] == '$')
             {
                 end.Next = new NFAState();
@@ -89,7 +96,7 @@ namespace SharpLexer
                 end = end.Next;
                 Contents.Add(end);
             }
-
+            */
             end.Accept = tokenName;
             NFAState ret = new NFAState();
             ret.Next = start;
@@ -164,7 +171,6 @@ namespace SharpLexer
                 switch (c)
                 {
                     case ')':
-                    case '$':
                     case '|':
                         return false;
                     case '*':
@@ -228,7 +234,7 @@ namespace SharpLexer
         {
             char c = GetCurChar();
 
-            if (c == '(')
+            if (c == '('&&MoveSteps==1)
             {
                 Expr(ref start, ref end);
                 if (this.CurIndex >= InnerExpression.Length)
@@ -237,7 +243,7 @@ namespace SharpLexer
                     throw new InvalidCharaterException("No ) for previous (");
                 }
                 c = GetCurChar();
-                if (c == ')')
+                if (c == ')'&& MoveSteps==1)
                 {
                     return;
                 }
@@ -247,25 +253,36 @@ namespace SharpLexer
                     throw new InvalidCharaterException(c + " is invlaid");
                 }
             }
-            else if (c == '%' && MoveSteps == 1 )
+            else if (c == '$' && MoveSteps == 1 )
             {
-                StringBuilder sb = new StringBuilder();
                 c = GetCurChar();
-                while (!(c == '%' && MoveSteps==1))
+                if (c == '('&&MoveSteps==1)
                 {
-                    sb.Append(c);
-                    c = GetCurChar();
+                    StringBuilder sb = new StringBuilder();
+                    while (this.CurIndex < InnerExpression.Length)
+                    {
+                        c = GetCurChar();
+                        if (c == ')' && MoveSteps == 1)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            sb.Append(c);
+                        }
+                    }
+                    
+                    if(c==')'&& MoveSteps==1 && sb.Length > 0)
+                    {
+                        int preIndex = CurIndex;
+                        string preInnerExpression = this.InnerExpression;
+                        string regex = Macros[sb.ToString()];
+                        this.GenerateInnerExpression(regex, 0);
+                        Expr(ref start, ref end);
+                        this.GenerateInnerExpression(preInnerExpression, preIndex);
+                    }
                 }
 
-                if(c=='%'&& MoveSteps==1 && sb.Length != 0)
-                {
-                    int preIndex = CurIndex;
-                    string preInnerExpression = this.InnerExpression;
-                    string regex = Macros[sb.ToString()];
-                    this.GenerateInnerExpression(regex, 0);
-                    Expr(ref start, ref end);
-                    this.GenerateInnerExpression(preInnerExpression, preIndex);
-                }
             }
             else
             {
@@ -375,7 +392,7 @@ namespace SharpLexer
             }
         }
 
-        public static HashSet<NFAState> GetEClousre(HashSet<NFAState> inputStates, ref string acceptStr)
+        public static HashSet<NFAState> GetEClousre(HashSet<NFAState> inputStates, ref string acceptStr, Dictionary<string, int> PriorityTable)
         {
 
             if (inputStates.Count == 0)
@@ -397,7 +414,14 @@ namespace SharpLexer
                 checkSet.Add(s);
                 if (s.Accept != null)
                 {
-                    acceptStr = s.Accept;
+                    if (acceptStr != null)
+                    {
+                        acceptStr = PriorityTable[acceptStr] < PriorityTable[s.Accept] ? acceptStr : s.Accept;
+                    }
+                    else
+                    {
+                        acceptStr = s.Accept;
+                    }
                 }
 
                 if (s.Edge == NFAState.EdgeLabel.EPSILON)

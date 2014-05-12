@@ -15,7 +15,7 @@ namespace SharpLexer
             Contents = new List<DFAState>();
         }
 
-        public DFAState GenerateDFAMachine(NFAState s)
+        public DFAState GenerateDFAMachine(NFAState s, Dictionary<string, int> PriorityTable)
         {
             DFAState start = new DFAState();
             DFAState cur = start;
@@ -24,7 +24,7 @@ namespace SharpLexer
             String acceptStr = null;
             cur.Contents = new HashSet<NFAState>();
             cur.Contents.Add(s);
-            cur.Contents = NFAStateMachine.GetEClousre(cur.Contents, ref acceptStr);
+            cur.Contents = NFAStateMachine.GetEClousre(cur.Contents, ref acceptStr, PriorityTable);
             Contents.Add(cur);
 
             while (UnmarkQueue.Count > 0)
@@ -36,7 +36,7 @@ namespace SharpLexer
                     HashSet<NFAState> baseSet = NFAStateMachine.Move(cur.Contents, c);
                     if(baseSet != null)
                     {
-                        HashSet<NFAState> set = NFAStateMachine.GetEClousre(baseSet, ref AcceptingStr);
+                        HashSet<NFAState> set = NFAStateMachine.GetEClousre(baseSet, ref AcceptingStr, PriorityTable);
                         DFAState ds = Contents.IsNFASetExisted(set);
                         if (ds == null)
                         {
@@ -50,8 +50,62 @@ namespace SharpLexer
                     }
                 }
             }
-            
+            //DumpAllStates();
+            TableMininize();
             return start;
+        }
+
+        public void TableMininize()
+        {
+            HashSet<char> initialGroup  = new HashSet<char>();
+            for(char i = (char)0; i < 256; i++)
+            {
+                initialGroup.Add(i);
+            }
+
+            List<HashSet<char>> groups = new List<HashSet<char>>(); 
+            groups.Add(initialGroup);
+            for (int i = 0; i < groups.Count; i++)
+            {
+                HashSet<char> g = groups[i];
+                List<char> chars = g.ToList();
+                HashSet<char> newGroup = new HashSet<char>();
+                for (int j = 1; j < chars.Count; j++)
+                {
+                    for(int k = 0; k < Contents.Count; k++)
+                    {
+                        StateWithJumpTable s1 = Contents[k][chars[0]];
+                        StateWithJumpTable s2 = Contents[k][chars[j]];
+                        if(s1!=s2)
+                        {
+                            newGroup.Add(chars[j]);
+                            g.Remove(chars[j]);
+                            break;
+                        }
+                    }
+                }
+                if(newGroup.Count > 0)
+                {
+                    groups.Add(newGroup);
+                }
+            }
+
+            Dictionary<char, int> transtable = new Dictionary<char, int>();
+            List<char> charlist = new List<char>();
+            for (int i = 0; i < groups.Count; i++)
+            {
+                List<char> charset = groups[i].ToList();
+                charlist.Add(charset[0]);
+                for (int j = 0; j < groups[i].Count; j++)
+                {
+                    transtable.Add(charset[j], i);
+                }
+            }
+
+            foreach (var s in Contents)
+            {
+                s.CompressingTable(transtable, charlist);
+            }
         }
 
         public void DumpAllStates()
@@ -62,6 +116,9 @@ namespace SharpLexer
             }
         }
     }
+
+
+
 
     public class MinDFAStateMachine
     {
@@ -131,6 +188,7 @@ namespace SharpLexer
 
             MapGroups();
             //DumpDFAFromGourps();
+           // this.DumpAllStates();
             Group.RefreshID();
             NFAState.RefreshID();
             DFAState.RefreshID();

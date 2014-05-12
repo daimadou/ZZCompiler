@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace SharpLexer
@@ -17,22 +18,12 @@ namespace SharpLexer
         }
         public override string ToString()
         {
-            return String.Format("Token Name: {0}, String Value:{1}", TokenName, Value);
+            return String.Format("Token:\n Name: {0}, Value: {1} ", TokenName, Value);
         }
 
         public override bool Equals(Object t)
         {
             return this.TokenName.Equals(((Token)t).TokenName) && this.Value.Equals(((Token)t).Value);
-        }
-
-        public static bool operator ==(Token x, Token y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(Token x, Token y)
-        {
-            return !x.Equals(y);
         }
     }
 
@@ -43,19 +34,48 @@ namespace SharpLexer
         NFAStateMachine nfaMachine;
         string Contents;
         int CurIndex;
-        Status CurStatus;
-
+        Dictionary<string, int> PriorityTable;
+        static int Priority = 0;
         public Scanner()
         {
             nfaMachine = new NFAStateMachine();
             Start = null;
             Contents = null;
             CurIndex = 0;
-            CurStatus = Status.START;
+            PriorityTable = new Dictionary<string,int>();
         }
 
-        public void AddRule(string regex, string tokenName)
+        public void ReadDefFile(string FileName)
         {
+            //Regex TokenPattern = new Regex(@"(^(TOKENNAME:\s*(?<TokenName>\w+)\s+EXPRESSION:\s*(?<Expr>.*)\s*)$)|(^\s*(\/\/.*)?$)");
+            Regex TokenPattern = new Regex(@"^(\$(?<MacroName>\w+)|(?<TokenName>\w+))\s*=\s*'(?<Regex>.+)'");
+            foreach (var line in System.IO.File.ReadLines(FileName))
+            {
+                Match token = TokenPattern.Match(line);
+                if (token.Success)
+                {
+                    string exp = token.Groups["Regex"].Value; 
+                    if (token.Groups["MacroName"].Success)
+                    {
+                        string macroName = token.Groups["MacroName"].Value;
+                        Console.WriteLine("MacroName:{0} Regex:{1}", macroName, exp);
+                        AddMacro(macroName, exp);
+                    }
+
+                    if (token.Groups["TokenName"].Success)
+                    {
+                        string tokenName = token.Groups["TokenName"].Value;
+                        Console.WriteLine("TokenName:{0} Regex:{1}", tokenName, exp);
+                        AddRule(tokenName, exp);
+                    }
+                    
+                }
+            }
+        }
+
+        public void AddRule(string tokenName, string regex)
+        {
+            PriorityTable.Add(tokenName, Priority++);
             Start = nfaMachine.AddRule(regex, tokenName);
         }
 
@@ -68,10 +88,10 @@ namespace SharpLexer
         {
             NFAState.RefreshID();
             DFAStateMachine dfaMachine = new DFAStateMachine();
-            Start = dfaMachine.GenerateDFAMachine((NFAState)Start);
+            Start = dfaMachine.GenerateDFAMachine((NFAState)Start, this.PriorityTable);
             State.RefreshID();
-            MinDFAStateMachine minMachine = new MinDFAStateMachine();
-            minMachine.MininzeDFAStates(dfaMachine.Contents, ref Start);
+            //MinDFAStateMachine minMachine = new MinDFAStateMachine();
+            //minMachine.MininzeDFAStates(dfaMachine.Contents, ref Start);
         }
 
         public void AddSource(string input)
@@ -80,6 +100,27 @@ namespace SharpLexer
             this.CurIndex = 0;
         }
 
+        public Token ReadOneTokenWithIgnore(String TokenName)
+        {
+            Token ret = null;
+            string tname = null;
+            bool isToken = false;
+            do
+            {
+                ret = ReadOneToken();
+                if (ret != null)
+                {
+                    tname = ret.TokenName;
+                    isToken = tname.Equals(TokenName);
+                }
+                else
+                {
+                    isToken = false;
+                }
+                
+            } while (ret != null && isToken);
+            return ret;
+        }
         
         public Token ReadOneToken()
         {
